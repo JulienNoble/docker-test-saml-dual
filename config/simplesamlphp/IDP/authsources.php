@@ -2,10 +2,6 @@
 
 $config = array(
 
-    'admin' => array(
-        'core:AdminPassword',
-    ),
-
     'example-userpass' => array(
         'exampleauth:UserPass',
         'user1:user1pass' => array(

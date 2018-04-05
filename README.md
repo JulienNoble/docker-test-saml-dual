@@ -1,106 +1,80 @@
-# Docker Test SAML 2.0 Identity Provider (IdP)
+# Docker Test SAML 2.0 dual SP and IdP
 
-[![DockerHub Pulls](https://img.shields.io/docker/pulls/kristophjunge/test-saml-idp.svg)](https://hub.docker.com/r/kristophjunge/test-saml-idp/) [![DockerHub Stars](https://img.shields.io/docker/stars/kristophjunge/test-saml-idp.svg)](https://hub.docker.com/r/kristophjunge/test-saml-idp/) [![GitHub Stars](https://img.shields.io/github/stars/kristophjunge/docker-test-saml-idp.svg?label=github%20stars)](https://github.com/kristophjunge/docker-test-saml-idp) [![GitHub Forks](https://img.shields.io/github/forks/kristophjunge/docker-test-saml-idp.svg?label=github%20forks)](https://github.com/kristophjunge/docker-test-saml-idp) [![GitHub License](https://img.shields.io/github/license/kristophjunge/docker-test-saml-idp.svg)](https://github.com/kristophjunge/docker-test-saml-idp)
+Docker container with a plug and play SAML 2.0 Identity Provider (IdP) and
+Service Provider (SP) for development and testing.
 
-![Seal of Approval](https://raw.githubusercontent.com/kristophjunge/docker-test-saml-idp/master/seal.jpg)
+## Abstract
 
-Docker container with a plug and play SAML 2.0 Identity Provider (IdP) for development and testing.
+![UGH](https://media.giphy.com/media/w2ZXRlkkiNflm/giphy.gif)
 
-Built with [SimpleSAMLphp](https://simplesamlphp.org). Based on official PHP7 Apache [images](https://hub.docker.com/_/php/).
+I got tired of configuring separate containers with largely outdated forks of
+the original repo, and while looking at SimpleSAMLphp's documentation, I saw
+that they litterally recommend you to have the SP and the IdP configured on the
+same machine.
 
-**Warning!**: Do not use this container in production! The container is not configured for security and contains static user credentials and SSL keys.
+So I
+[forked Kristoph Junge's original IdP container](https://github.com/kristophjunge/docker-test-saml-idp)
+to fit my needs and basically setup a really basic SP and IdP dev environment.
+[This magnificient stackoverflow thread](https://stackoverflow.com/questions/44106971/configuring-simplesamlphp-idp-and-sp-in-the-same-box)
+also helped a lot.
 
-SimpleSAMLphp is logging to stdout on debug log level. Apache is logging error and access log to stdout.
+This is a kind of specific base setup for the project I'm using it on. A lot of
+settings have become static, including entity id and urls. I encourage you to
+fork it and use it as a base for your dev env needs.
 
-The contained version of SimpleSAMLphp is 1.15.2.
+## Technicals
 
+Built with [SimpleSAMLphp](https://simplesamlphp.org). Based on official PHP7
+Apache [images](https://hub.docker.com/_/php/).
 
-## Supported Tags
+**Warning!**: Do not use this container in production! The container is not
+configured for security and contains static user credentials and SSL keys.
 
-- `1.15` [(Dockerfile)](https://github.com/kristophjunge/docker-test-saml-idp/blob/1.15/Dockerfile)
-- `1.14` [(Dockerfile)](https://github.com/kristophjunge/docker-test-saml-idp/blob/1.14/Dockerfile)
+SimpleSAMLphp is logging to stdout on debug log level. Apache is logging error
+and access log to stdout.
 
+The contained version of SimpleSAMLphp is 1.15.4.
 
 ## Changelog
 
-See [CHANGELOG.md](https://github.com/kristophjunge/docker-test-saml-idp/blob/master/docs/CHANGELOG.md) for information about the latest changes.
-
+See [CHANGELOG.md](docs/CHANGELOG.md) for information about the latest changes.
 
 ## Usage
 
 ```
-docker run --name=testsamlidp_idp \
--p 8080:8080 \
--p 8443:8443 \
--e SIMPLESAMLPHP_SP_ENTITY_ID=http://app.example.com \
--e SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE=http://localhost/simplesaml/module.php/saml/sp/saml2-acs.php/test-sp \
--e SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE=http://localhost/simplesaml/module.php/saml/sp/saml2-logout.php/test-sp \
--d kristophjunge/test-saml-idp
+docker build -t JulienNoble/testsaml-dual .
+docker run --name=testsaml-dual \
+    -p 8443-8444:8443-8444 \
+    -d JulienNoble/testsaml-dual
 ```
 
 There are two static users configured in the IdP with the following data:
 
-| UID | Username | Password | Group | Email |
-|---|---|---|---|---|
-| 1 | user1 | user1pass | group1 | user1@example.com |
-| 2 | user2 | user2pass | group2 | user2@example.com |
+| UID | Username | Password  | Group  | Email             |
+| --- | -------- | --------- | ------ | ----------------- |
+| 1   | user1    | user1pass | group1 | user1@example.com |
+| 2   | user2    | user2pass | group2 | user2@example.com |
 
-However you can define your own users by mounting a configuration file:
+The name of the SP is `default-SP`, for lack of inspiration.
 
-```
--v /users.php:/var/www/simplesamlphp/config/authsources.php
-```
+The certificate is evidently not valid (same as original repo), but necessary
+since I removed insecure http access (because nobody in their right mind does
+http auth in 2018).
 
-You can access the SimpleSAMLphp web interface of the IdP under `http://localhost:8080/simplesaml`. The admin password is `secret`.
+You can access the SimpleSAMLphp web interface of the SP under
+`https://localhost:8444/simplesaml`. The admin password is `secret`.
 
-
-## Test the Identity Provider (IdP)
-
-To ensure that the IdP works you can use SimpleSAMLphp as test SP.
-
-Download a fresh installation of [SimpleSAMLphp](https://simplesamlphp.org) and configure it for your favorite web server.
-
-For this test the following is assumed:
-- The entity id of the SP is `http://app.example.com`.
-- The local development URL of the SP is `http://localhost`.
-- The local development URL of the IdP is `http://localhost:8080`.
-
-The entity id is only the name of SP and the contained URL wont be used as part of the auth mechanism.
-
-Add the following entry to the `config/authsources.php` file of SimpleSAMLphp.
-```
-    'test-sp' => array(
-        'saml:SP',
-        'entityID' => 'http://app.example.com',
-        'idp' => 'http://localhost:8080/simplesaml/saml2/idp/metadata.php',
-    ),
-```
-
-Add the following entry to the `metadata/saml20-idp-remote.php` file of SimpleSAMLphp.
-```
-$metadata['http://localhost:8080/simplesaml/saml2/idp/metadata.php'] = array(
-    'name' => array(
-        'en' => 'Test IdP',
-    ),
-    'description' => 'Test IdP',
-    'SingleSignOnService' => 'http://localhost:8080/simplesaml/saml2/idp/SSOService.php',
-    'SingleLogoutService' => 'http://localhost:8080/simplesaml/saml2/idp/SingleLogoutService.php',
-    'certFingerprint' => '119b9e027959cdb7c662cfd075d9e2ef384e445f',
-);
-```
-
-Start the development IdP with the command above (usage) and initiate the login from the development SP under `http://localhost/simplesaml`.
-
-Click under `Authentication` > `Test configured authentication sources` > `test-sp` and login with one of the test credentials.
-
+You can access the SimpleSAMLphp web interface of the IdP under
+`https://localhost:8444/simplesaml-idp`. There is no admin.
 
 ## Contributing
 
-See [CONTRIBUTING.md](https://github.com/kristophjunge/docker-test-saml-idp/blob/master/docs/CONTRIBUTING.md) for information on how to contribute to the project.
+See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for information on how to contribute
+to the project.
 
-See [CONTRIBUTORS.md](https://github.com/kristophjunge/docker-test-saml-idp/blob/master/docs/CONTRIBUTORS.md) for the list of contributors.
-
+See [CONTRIBUTORS.md](docs/CONTRIBUTORS.md) for the list of contributors.
 
 ## License
 
-This project is licensed under the MIT license by Kristoph Junge.
+This project is licensed under the MIT license by Kristoph Junge and Julien
+Noble.

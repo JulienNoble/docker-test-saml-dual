@@ -259,10 +259,11 @@ $config = array(
      * one of the functionalities below, but in some cases you could run multiple functionalities.
      * In example when you are setting up a federation bridge.
      */
-    'enable.saml20-idp' => true,
-    'enable.shib13-idp' => true,
+    'enable.saml20-idp' => false,
+    'enable.shib13-idp' => false,
     'enable.adfs-idp' => false,
     'enable.wsfed-sp' => false,
+    'enable.saml20-sp' => true,
     'enable.authmemcookie' => false,
 
 
@@ -306,7 +307,7 @@ $config = array(
     /*
      * Option to override the default settings for the session cookie name
      */
-    'session.cookie.name' => 'SimpleSAMLSessionIDIdp',
+    'session.cookie.name' => 'SimpleSAMLSessionIDSp',
 
     /*
      * Expiration time for the session cookie, in seconds.
