@@ -42,10 +42,10 @@ See [CHANGELOG.md](docs/CHANGELOG.md) for information about the latest changes.
 ## Usage
 
 ```
-docker build -t JulienNoble/testsaml-dual .
+docker build -t juliennoble/testsaml-dual .
 docker run --name=testsaml-dual \
     -p 8443-8444:8443-8444 \
-    -d JulienNoble/testsaml-dual
+    -d juliennoble/testsaml-dual
 ```
 
 There are two static users configured in the IdP with the following data:
@@ -62,7 +62,7 @@ since I removed insecure http access (because nobody in their right mind does
 http auth in 2018).
 
 You can access the SimpleSAMLphp web interface of the SP under
-`https://localhost:8444/simplesaml`. The admin password is `secret`.
+`https://localhost:8443/simplesaml`. The admin password is `secret`.
 
 You can access the SimpleSAMLphp web interface of the IdP under
 `https://localhost:8444/simplesaml-idp`. There is no admin.
